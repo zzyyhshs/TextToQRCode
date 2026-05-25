@@ -1,0 +1,25 @@
+{
+  "manifest_version": 3,
+  "name": "Text to QR Code",
+  "version": "1.0.0",
+  "description": "选中页面文字，生成二维码",
+  "permissions": ["contextMenus", "activeTab", "scripting", "storage"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": "icon.png"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["lib/qrcode.min.js", "lib/jsqr.min.js", "content.js"]
+    }
+  ],
+  "icons": {
+    "16": "icon.png",
+    "48": "icon.png",
+    "128": "icon.png"
+  }
+}

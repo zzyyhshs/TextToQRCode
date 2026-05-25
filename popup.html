@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    html, body {
+      margin: 0;
+      overflow: hidden;
+    }
+    html {
+      width: 332px;
+    }
+    body {
+      width: 332px;
+      padding: 16px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    .tab-bar {
+      display: flex;
+      margin: -16px -16px 12px;
+      padding: 4px 8px 0;
+      background: #f8f9fa;
+      border-bottom: 1px solid #eee;
+      gap: 2px;
+    }
+    .tab-bar .tab {
+      flex: 1;
+      text-align: center;
+      padding: 7px 0 6px;
+      font-size: 12px;
+      color: #888;
+      cursor: pointer;
+      border-radius: 6px 6px 0 0;
+      transition: all 0.2s;
+      position: relative;
+      font-weight: 500;
+    }
+    .tab-bar .tab:hover {
+      color: #555;
+      background: rgba(0,0,0,0.03);
+    }
+    .tab-bar .tab.active {
+      color: #4285f4;
+      background: #fff;
+      box-shadow: 0 -1px 3px rgba(0,0,0,0.05);
+    }
+    .tab-bar .tab.active::after {
+      content: "";
+      position: absolute;
+      bottom: -1px;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: #fff;
+    }
+    #result-area {
+      height: 240px;
+      position: relative;
+      display: none;
+    }
+    #result-area.active {
+      display: block;
+    }
+    #qr-box {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: #f5f5f5;
+      border-radius: 8px;
+      height: 100%;
+      width: 100%;
+      overflow: hidden;
+    }
+    #qr-box.active {
+      display: flex;
+    }
+    #qr-box.active img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+    #qr-box canvas { display: none !important; }
+    #qr-box img { display: block !important; }
+    #panel-text.active {
+      display: flex;
+      flex-direction: column;
+    }
+    #input-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    #input-text {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 13px;
+      box-sizing: border-box;
+      margin-bottom: 8px;
+      resize: none;
+      flex: 1;
+    }
+    #generate-btn {
+      width: 100%;
+      padding: 8px;
+      background: #4285f4;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    #generate-btn:hover {
+      background: #3367d6;
+    }
+    .divider {
+      height: 1px;
+      background: #eee;
+      margin: 6px 0;
+    }
+    .history-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .history-header h4 {
+      margin: 0;
+      font-size: 13px;
+      color: #666;
+    }
+    #clear-all {
+      font-size: 12px;
+      color: #999;
+      cursor: pointer;
+      background: none;
+      border: none;
+      padding: 0;
+    }
+    #clear-all:hover {
+      color: #e53935;
+    }
+    #history-list {
+      max-height: 126px;
+      overflow-y: auto;
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+    #history-list.collapsed {
+      display: none;
+    }
+    .toggle-btn {
+      cursor: pointer;
+      font-size: 12px;
+      color: #999;
+      margin-left: 8px;
+      user-select: none;
+    }
+    .toggle-btn:hover {
+      color: #333;
+    }
+    #history-list .tag {
+      font-size: 10px;
+      padding: 1px 4px;
+      border-radius: 3px;
+      margin-right: 6px;
+      flex-shrink: 0;
+    }
+    #history-list .tag.generate {
+      color: #4285f4;
+      background: #e8f0fe;
+    }
+    #history-list .tag.decode {
+      color: #34a853;
+      background: #e6f4ea;
+    }
+    #history-list li {
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      color: #333;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+    }
+    #history-list li .text {
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    #history-list li .delete-btn {
+      display: none;
+      margin-left: 6px;
+      color: #ccc;
+      font-size: 16px;
+      line-height: 1;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    #history-list li:hover .delete-btn {
+      display: block;
+    }
+    #history-list li .delete-btn:hover {
+      color: #e53935;
+    }
+    #history-list li:hover {
+      background: #f0f4ff;
+    }
+    #history-list li.active {
+      background: #e3ecff;
+    }
+    .time {
+      font-size: 11px;
+      color: #999;
+      margin-left: 6px;
+    }
+    #decode-result {
+      display: none;
+      padding: 10px 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      word-break: break-all;
+      height: 100%;
+      box-sizing: border-box;
+      overflow-y: auto;
+    }
+    #decode-result.success {
+      display: block;
+      background: #f0f8f0;
+      color: #333;
+      padding: 0;
+    }
+    #decode-result .decode-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 12px;
+      font-size: 11px;
+      color: #999;
+      border-bottom: 1px solid #e0e8e0;
+    }
+    #decode-result .decode-header .copy-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 11px;
+      color: #4285f4;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      gap: 3px;
+    }
+    #decode-result .decode-header .copy-btn:hover {
+      color: #1a5fd6;
+    }
+    #decode-result .decode-header .copy-btn svg {
+      width: 12px;
+      height: 12px;
+    }
+    #decode-result .decode-body {
+      padding: 8px 12px;
+    }
+    #decode-result.fail {
+      display: block;
+      background: #fff3f0;
+      color: #e53935;
+    }
+    #decode-result a {
+      color: #4285f4;
+      text-decoration: none;
+    }
+    #decode-result a:hover {
+      text-decoration: underline;
+    }
+    .tab-panel { display: none; min-height: 118px; max-height: 118px; overflow-y: auto; }
+    .tab-panel.active { display: block; }
+    .color-inline {
+      display: flex;
+      gap: 16px;
+    }
+    .color-inline label {
+      font-size: 11px;
+      color: #555;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .color-inline input[type="color"] {
+      width: 28px;
+      height: 20px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 1px;
+      cursor: pointer;
+      background: none;
+    }
+    #reset-all {
+      width: 100%;
+      padding: 5px;
+      font-size: 11px;
+      color: #666;
+      background: #f5f5f5;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-top: 6px;
+    }
+    #reset-all:hover {
+      background: #eee;
+      color: #333;
+    }
+    .logo-panel {
+      padding: 4px 0 8px;
+    }
+    #logo-list {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      overflow-y: hidden;
+      padding-bottom: 4px;
+    }
+    #logo-list::-webkit-scrollbar {
+      height: 3px;
+    }
+    #logo-list::-webkit-scrollbar-thumb {
+      background: #ddd;
+      border-radius: 2px;
+    }
+    .logo-item {
+      min-width: 48px;
+      width: 48px;
+      height: 48px;
+      border: 2px solid #eee;
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+      background: #fafafa;
+      transition: border-color 0.15s;
+    }
+    .logo-item:hover {
+      border-color: #bbb;
+    }
+    .logo-item.active {
+      border-color: #4285f4;
+    }
+    .logo-item img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      padding: 4px;
+    }
+    .logo-item .logo-none {
+      font-size: 10px;
+      color: #999;
+    }
+    .logo-item.add-btn {
+      font-size: 22px;
+      color: #bbb;
+      border-style: dashed;
+      cursor: default;
+    }
+    .drop-zone {
+      margin-top: 8px;
+      padding: 12px 0;
+      border: 2px dashed #ddd;
+      border-radius: 8px;
+      text-align: center;
+      font-size: 11px;
+      color: #aaa;
+      transition: all 0.15s;
+    }
+    .drop-zone.drag-over {
+      border-color: #4285f4;
+      background: #e8f0fe;
+      color: #4285f4;
+    }
+    .logo-item .del-logo {
+      position: absolute;
+      top: -1px;
+      right: -1px;
+      width: 14px;
+      height: 14px;
+      background: #e53935;
+      color: #fff;
+      font-size: 10px;
+      line-height: 14px;
+      text-align: center;
+      border-radius: 0 6px 0 4px;
+      display: none;
+      cursor: pointer;
+    }
+    .logo-item:hover .del-logo {
+      display: block;
+    }
+    .level-panel {
+      padding: 4px 0 8px;
+    }
+    .level-panel .setting-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 4px;
+    }
+    .level-panel .setting-group {
+      margin-bottom: 8px;
+    }
+    .level-panel .setting-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .level-panel .setting-row input[type="range"] {
+      flex: 1;
+      height: 4px;
+      accent-color: #4285f4;
+    }
+    .level-panel .setting-row .range-min {
+      font-size: 11px;
+      color: #999;
+    }
+    .level-panel .setting-row .val-input {
+      width: 42px;
+      font-size: 11px;
+      color: #555;
+      text-align: center;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 2px 0;
+      outline: none;
+      -moz-appearance: textfield;
+    }
+    .level-panel .setting-row .val-input::-webkit-inner-spin-button,
+    .level-panel .setting-row .val-input::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    .level-panel .setting-row .val-input:focus {
+      border-color: #4285f4;
+    }
+    .level-panel .setting-label .cur-val {
+      font-weight: normal;
+      color: #4285f4;
+      margin-left: 4px;
+    }
+    .level-options {
+      display: flex;
+      gap: 6px;
+    }
+    .level-option {
+      flex: 1;
+      text-align: center;
+      padding: 8px 0 6px;
+      border: 1px solid #eee;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.15s;
+      background: #fafafa;
+    }
+    .level-option:hover {
+      border-color: #bbb;
+    }
+    .level-option.active {
+      border-color: #4285f4;
+      background: #e8f0fe;
+    }
+    .level-option .level-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: #333;
+    }
+    .level-option.active .level-name {
+      color: #4285f4;
+    }
+    .level-option .level-desc {
+      font-size: 10px;
+      color: #999;
+      margin-top: 2px;
+    }
+    .empty-hint {
+      font-size: 12px;
+      color: #999;
+      text-align: center;
+      padding: 16px 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="tab-bar">
+    <div class="tab active" data-tab="text">文本</div>
+    <div class="tab" data-tab="logo">Logo</div>
+    <div class="tab" data-tab="level">高级</div>
+  </div>
+  <div id="panel-text" class="tab-panel active">
+    <div id="input-area">
+      <textarea id="input-text" placeholder="输入文字生成二维码"></textarea>
+      <button id="generate-btn">生成二维码</button>
+    </div>
+  </div>
+  <div id="panel-logo" class="tab-panel">
+    <div class="logo-panel">
+      <div id="logo-list"></div>
+      <div id="logo-drop-zone" class="drop-zone">拖拽图片到此处添加 Logo</div>
+    </div>
+  </div>
+  <div id="panel-level" class="tab-panel">
+    <div class="level-panel">
+      <div class="setting-group">
+        <div class="setting-label">容错级别</div>
+        <div class="level-options">
+          <div class="level-option" data-level="L"><div class="level-name">L</div><div class="level-desc">~7%</div></div>
+          <div class="level-option active" data-level="M"><div class="level-name">M</div><div class="level-desc">~15%</div></div>
+          <div class="level-option" data-level="Q"><div class="level-name">Q</div><div class="level-desc">~25%</div></div>
+          <div class="level-option" data-level="H"><div class="level-name">H</div><div class="level-desc">~30%</div></div>
+        </div>
+      </div>
+      <div class="setting-group">
+        <div class="setting-label">尺寸 <span class="cur-val" id="qr-size-cur">200px</span></div>
+        <div class="setting-row">
+          <span class="range-min">21</span>
+          <input type="range" id="qr-size" min="21" max="400" step="1" value="200">
+          <input type="number" class="val-input" id="qr-size-max" min="21" step="1" value="400" title="上限">
+        </div>
+      </div>
+      <div class="setting-group">
+        <div class="setting-label">边距 <span class="cur-val" id="qr-margin-cur">10px</span></div>
+        <div class="setting-row">
+          <span class="range-min">0</span>
+          <input type="range" id="qr-margin" min="0" max="20" step="1" value="10">
+          <input type="number" class="val-input" id="qr-margin-max" min="0" step="1" value="20" title="上限">
+        </div>
+      </div>
+      <div class="setting-group">
+        <div class="setting-label">颜色</div>
+        <div class="color-inline">
+          <label>前景 <input type="color" id="color-fg" value="#000000"></label>
+          <label>背景 <input type="color" id="color-bg" value="#ffffff"></label>
+        </div>
+      </div>
+      <button id="reset-all">恢复默认</button>
+    </div>
+  </div>
+  <div class="divider"></div>
+  <div id="result-area">
+    <div id="qr-box"></div>
+    <div id="decode-result"></div>
+  </div>
+  <div class="divider"></div>
+  <div id="history-section">
+    <div class="history-header">
+      <h4>历史记录 <span id="toggle-history" class="toggle-btn">&#9660; 展开</span></h4>
+      <button id="clear-all">清空</button>
+    </div>
+    <ul id="history-list" class="collapsed"></ul>
+  </div>
+  <script src="lib/jsqr.min.js"></script>
+  <script src="lib/qrcode.min.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>
