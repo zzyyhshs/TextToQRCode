@@ -1,15 +1,28 @@
-chrome.runtime.onInstalled.addListener(() => {
-  chrome.contextMenus.create({
+const CONTEXT_MENUS = [
+  {
     id: "generate-qrcode",
     title: "生成二维码",
     contexts: ["selection"]
-  });
-  chrome.contextMenus.create({
+  },
+  {
     id: "decode-qrcode",
     title: "解析二维码",
     contexts: ["image"]
+  }
+];
+
+// 幂等重建：Chrome 存在 onInstalled 漏触发的情况（crbug 388231 等），
+// 一旦漏触发，菜单项就永久缺失且不会自行恢复，因此在安装与浏览器启动时都重建一次。
+function registerContextMenus() {
+  chrome.contextMenus.removeAll(() => {
+    for (const item of CONTEXT_MENUS) {
+      chrome.contextMenus.create(item);
+    }
   });
-});
+}
+
+chrome.runtime.onInstalled.addListener(registerContextMenus);
+chrome.runtime.onStartup.addListener(registerContextMenus);
 
 // 鼠标悬停 canvas 时动态扩展解析菜单的上下文
 chrome.runtime.onMessage.addListener((msg) => {

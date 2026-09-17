@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Text to QR Code",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "选中页面文字，生成二维码",
   "permissions": ["contextMenus", "activeTab", "scripting", "storage"],
   "background": {
